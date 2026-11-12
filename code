@@ -1,0 +1,57 @@
+#include <SoftwareSerial.h>
+
+SoftwareSerial bluetooth(2, 4);
+
+const byte ENA = 5;
+const byte IN1 = 11;
+const byte IN2 = 10;
+const byte ENB = 3;
+const byte IN3 = 9;
+const byte IN4 = 6;
+const byte MOTOR_SPEED = 180; // PWM range: 0-255
+
+void stopMotors() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+
+void drive(byte leftA, byte leftB, byte rightA, byte rightB) {
+  digitalWrite(IN1, leftA);
+  digitalWrite(IN2, leftB);
+  digitalWrite(IN3, rightA);
+  digitalWrite(IN4, rightB);
+  analogWrite(ENA, MOTOR_SPEED);
+  analogWrite(ENB, MOTOR_SPEED);
+}
+
+void setup() {
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(ENB, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  stopMotors();
+  Serial.begin(9600);
+  bluetooth.begin(9600);
+}
+
+void loop() {
+  if (!bluetooth.available()) return;
+
+  char command = bluetooth.read();
+  if (command >= 'a' && command <= 'z') command -= ('a' - 'A');
+
+  switch (command) {
+    case 'F': drive(HIGH, LOW, HIGH, LOW); break; // forward
+    case 'B': drive(LOW, HIGH, LOW, HIGH); break; // backward
+    case 'L': drive(HIGH, LOW, LOW, HIGH); break; // left motor forward, right motor reverse
+    case 'R': drive(LOW, HIGH, HIGH, LOW); break; // right motor forward, left motor reverse
+    case 'S': stopMotors(); break;               // stop
+    default: break; 
+  }
+}
